@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mixtape</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f5efe6; --card: #fffdf9; --ink: #221d18; --muted: #75695d; --line: #e7ddd0;
+    --accent: #e0533a; --accent-ink: #fff; --accent-soft: #fbe3dc;
+    --good: #2f8a5b; --good-soft: #dcf1e5; --warn: #a86a00; --warn-soft: #fbefd6;
+    --bad: #c03b3b; --bad-soft: #f8dede; --shadow: 0 1px 2px rgba(60,40,20,.06), 0 6px 24px rgba(60,40,20,.06);
+    --radius: 18px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f; --card: #221e18; --ink: #f3ece3; --muted: #b1a597; --line: #3a332a;
+      --accent: #ff6e52; --accent-ink: #1b0f0b; --accent-soft: #3d2219;
+      --good: #6fd19c; --good-soft: #1d3628; --warn: #f0b84a; --warn-soft: #3a2e14;
+      --bad: #ff8a8a; --bad-soft: #3d1e1e; --shadow: none;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.5 ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+    padding: 28px 16px 60px;
+  }
+  main { max-width: 620px; margin: 0 auto; display: grid; gap: 18px; }
+  header { display: flex; align-items: center; gap: 14px; padding: 4px 4px 8px; }
+  header svg { flex: none; }
+  h1 { font-size: 28px; margin: 0; letter-spacing: -.02em; }
+  header p { margin: 0; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+  .step { display: flex; gap: 10px; align-items: center; margin: 0 0 14px; font-size: 19px; }
+  .num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+         display: grid; place-items: center; font-size: 15px; font-weight: 700; flex: none; }
+  .num.done { background: var(--good); }
+  h2 { font-size: inherit; margin: 0; }
+  p { margin: 0 0 10px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 14px; }
+  button, .btn {
+    font: inherit; font-weight: 650; border: 0; border-radius: 999px; padding: 12px 22px; cursor: pointer;
+    background: var(--accent); color: var(--accent-ink); transition: transform .08s, opacity .2s;
+  }
+  button:active { transform: scale(.97); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+  button.link { background: none; color: var(--accent); padding: 0; font-weight: 600; border-radius: 4px; }
+  button.big { font-size: 18px; padding: 15px 28px; width: 100%; }
+  button.danger { background: var(--bad); color: #fff; }
+  input[type=text] {
+    font: inherit; width: 100%; padding: 13px 16px; border-radius: 14px; border: 1.5px solid var(--line);
+    background: var(--bg); color: var(--ink); outline: none;
+  }
+  input[type=text]:focus { border-color: var(--accent); }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row > input { flex: 1 1 240px; }
+  details { margin-top: 14px; }
+  summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 15px; }
+  details ol { margin: 10px 0 0; padding-left: 22px; color: var(--muted); font-size: 15px; }
+  details li { margin-bottom: 4px; }
+  .ipod { display: flex; gap: 16px; align-items: center; }
+  .ipod svg { flex: none; }
+  .bar { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s; }
+  .bar.good > i { background: var(--good); }
+  .pulse { width: 12px; height: 12px; border-radius: 50%; background: var(--warn); flex: none;
+           animation: pulse 1.6s infinite; }
+  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(224,160,40,.5); } 70% { box-shadow: 0 0 0 12px rgba(224,160,40,0); } 100% { box-shadow: 0 0 0 0 rgba(224,160,40,0); } }
+  .note { border-radius: 12px; padding: 12px 14px; font-size: 15px; margin: 12px 0 0; }
+  .note.warn { background: var(--warn-soft); color: var(--warn); }
+  .note.bad { background: var(--bad-soft); color: var(--bad); }
+  .note.good { background: var(--good-soft); color: var(--good); }
+  .preview { display: flex; gap: 16px; align-items: center; margin: 18px 0 14px; }
+  .cover { width: 84px; height: 84px; border-radius: 12px; object-fit: cover; background: var(--accent-soft); flex: none; }
+  .cover.sm { width: 52px; height: 52px; border-radius: 9px; }
+  .preview .grow { flex: 1; min-width: 0; }
+  .name-input { font-size: 20px !important; font-weight: 700; padding: 8px 12px !important; }
+  ul.songs { list-style: none; margin: 10px 0 0; padding: 0; max-height: 320px; overflow: auto;
+             border: 1px solid var(--line); border-radius: 12px; }
+  ul.songs li { display: flex; gap: 10px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 15px; }
+  ul.songs li:last-child { border: 0; }
+  ul.songs .t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.songs .t span { color: var(--muted); }
+  .ic { width: 20px; text-align: center; flex: none; font-weight: 700; }
+  .ic.done { color: var(--good); } .ic.failed { color: var(--bad); } .ic.already { color: var(--muted); }
+  .ic.working::before { content: ""; display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+                        border: 2.5px solid var(--line); border-top-color: var(--accent); animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .big-num { font-size: 40px; font-weight: 800; letter-spacing: -.03em; line-height: 1; }
+  .pl { display: flex; gap: 14px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .pl:last-child { border: 0; padding-bottom: 0; }
+  .pl .grow { flex: 1 1 160px; min-width: 0; }
+  .pl b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .drop { margin-top: 14px; border: 2px dashed var(--line); border-radius: 14px; padding: 16px; text-align: center; color: var(--muted); font-size: 15px; }
+  .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .confirm { width: 100%; background: var(--bad-soft); border-radius: 12px; padding: 12px 14px; }
+  .confirm label { display: flex; gap: 8px; align-items: center; margin: 6px 0 10px; font-size: 15px; }
+  footer { text-align: center; color: var(--muted); font-size: 14px; }
+  .overlay { position: fixed; inset: 0; background: rgba(20,15,10,.6); display: grid; place-items: center; padding: 16px; z-index: 9; }
+  .overlay .card { max-width: 420px; text-align: center; }
+  .tip { display: flex; gap: 12px; align-items: flex-start; }
+  kbd { font: inherit; font-weight: 650; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <svg width="54" height="54" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="4" y="12" width="56" height="40" rx="7" fill="var(--accent)"/>
+      <rect x="12" y="19" width="40" height="17" rx="4" fill="var(--card)"/>
+      <circle cx="23" cy="27.5" r="4.5" fill="var(--ink)"/><circle cx="41" cy="27.5" r="4.5" fill="var(--ink)"/>
+      <path d="M16 52l5-9h22l5 9" fill="none" stroke="var(--card)" stroke-width="3" stroke-linejoin="round"/>
+    </svg>
+    <div><h1>Mixtape</h1><p>Your Spotify playlists, on your iPod.</p></div>
+  </header>
+
+  <!-- STEP 1: the iPod -->
+  <section class="card" id="ipodCard">
+    <div class="step"><span class="num" id="n1">1</span><h2>Plug in your iPod</h2></div>
+    <div id="noIpod">
+      <div class="row" style="gap:12px;flex-wrap:nowrap">
+        <span class="pulse"></span>
+        <p style="margin:0">Connect your iPod with its cable and wait for it to show <b>“USB connected”</b> (or a USB logo). We'll find it automatically.</p>
+      </div>
+    </div>
+    <div id="yesIpod" hidden>
+      <div class="ipod">
+        <svg width="44" height="64" viewBox="0 0 44 64" aria-hidden="true">
+          <rect x="1" y="1" width="42" height="62" rx="7" fill="var(--line)" stroke="var(--muted)" stroke-width="1.5"/>
+          <rect x="6" y="6" width="32" height="22" rx="2" fill="var(--ink)" opacity=".85"/>
+          <circle cx="22" cy="45" r="12" fill="var(--card)" stroke="var(--muted)" stroke-width="1.2"/>
+          <circle cx="22" cy="45" r="4" fill="var(--line)" stroke="var(--muted)" stroke-width="1"/>
+        </svg>
+        <div style="flex:1;min-width:0">
+          <p style="margin:0 0 6px"><b id="ipodName">iPod</b> is connected <span style="color:var(--good)">✓</span></p>
+          <div class="bar good"><i id="ipodBar" style="width:0"></i></div>
+          <p class="muted small" style="margin:6px 0 0" id="ipodSpace"></p>
+        </div>
+      </div>
+      <div id="ipodPicker" class="row" style="margin-top:12px" hidden>
+        <span class="small muted">More than one found:</span>
+        <select id="ipodSelect" style="font:inherit;padding:6px 10px;border-radius:10px"></select>
+      </div>
+      <div id="notRockbox" class="note warn" hidden>This drive doesn't have Rockbox on it. Are you sure it's the iPod?</div>
+    </div>
+    <details id="manualBox">
+      <summary>It's plugged in but nothing shows up</summary>
+      <ol>
+        <li>Make sure the iPod screen says it's connected over USB. If it's charging but not connected, unplug it and plug it back in.</li>
+        <li>Try a different USB port or cable (some cables only charge).</li>
+        <li>Still nothing? Type where your computer shows the iPod, for example <kbd>E:\</kbd> on Windows or <kbd>/Volumes/IPOD</kbd> on a Mac:</li>
+      </ol>
+      <div class="row" style="margin-top:10px">
+        <input type="text" id="manualPath" placeholder="E:\  or  /Volumes/IPOD">
+        <button class="ghost" id="manualBtn">Use this</button>
+      </div>
+      <p class="note bad" id="manualErr" hidden></p>
+    </details>
+  </section>
+
+  <!-- PROGRESS -->
+  <section class="card" id="jobCard" hidden>
+    <div class="preview" style="margin-top:0">
+      <img class="cover" id="jobCover" alt="">
+      <div class="grow">
+        <p class="muted small" style="margin:0" id="jobLabel">Adding to your iPod</p>
+        <p style="font-size:20px;font-weight:700;margin:0" id="jobName"></p>
+      </div>
+    </div>
+    <div class="row" style="justify-content:space-between;align-items:flex-end;margin-bottom:8px">
+      <span class="big-num" id="jobCount">0 / 0</span>
+      <span class="muted small" id="jobEta"></span>
+    </div>
+    <div class="bar"><i id="jobBar" style="width:0"></i></div>
+    <p class="note warn" id="jobKeep">Keep the iPod plugged in and this window open. You can still use your computer for other things.</p>
+    <div id="jobDone" hidden>
+      <p class="note good" id="jobSummary"></p>
+      <p class="note bad" id="jobError" hidden></p>
+      <div class="tip note" style="background:var(--bg);color:var(--ink)">
+        <div>On the iPod, go to <b>Playlists</b> in the main menu and pick <b id="jobName2"></b>.</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="ghost" id="cancelBtn">Stop</button>
+      <button id="ejectBtn" hidden>Eject iPod</button>
+      <button class="ghost" id="anotherBtn" hidden>Add another playlist</button>
+    </div>
+    <p class="note good" id="ejectMsg" hidden></p>
+    <details id="failedBox" hidden><summary id="failedSummary"></summary>
+      <p class="small muted" style="margin:10px 0 0">These songs couldn't be found. Usually they're very new, or only on Spotify. Try <b>Update</b> later, or add them yourself.</p>
+      <ul class="songs" id="failedList"></ul>
+    </details>
+    <details><summary>Show all songs</summary><ul class="songs" id="jobSongs"></ul></details>
+  </section>
+
+  <!-- STEP 2: add a playlist -->
+  <section class="card" id="addCard">
+    <div class="step"><span class="num">2</span><h2>Add a Spotify playlist</h2></div>
+    <form id="lookupForm" class="row">
+      <input type="text" id="link" placeholder="Paste a Spotify playlist link here" autocomplete="off">
+      <button type="submit" id="findBtn">Find it</button>
+    </form>
+    <details>
+      <summary>Where do I get the link?</summary>
+      <ol>
+        <li>Open the playlist in Spotify (phone or computer).</li>
+        <li>Tap the <b>•••</b> button (or right-click the playlist).</li>
+        <li>Choose <b>Share</b> → <b>Copy link</b>.</li>
+        <li>Come back here, click the box above and paste (<kbd>Ctrl</kbd>+<kbd>V</kbd>, or <kbd>⌘</kbd>+<kbd>V</kbd> on a Mac).</li>
+      </ol>
+      <p class="small muted" style="margin:10px 0 0">Albums and single songs work too.</p>
+    </details>
+    <p class="note bad" id="lookupErr" hidden></p>
+
+    <div id="preview" hidden>
+      <div class="preview">
+        <img class="cover" id="pvCover" alt="">
+        <div class="grow">
+          <label class="small muted" for="pvName">Playlist name on your iPod</label>
+          <input type="text" id="pvName" class="name-input">
+          <p class="muted small" style="margin:4px 0 0" id="pvCount"></p>
+        </div>
+      </div>
+      <p class="note warn" id="pvTrunc" hidden>
+        Spotify only lets us see the first 100 songs of a playlist. If yours is longer, see
+        <b>“My playlist has more than 100 songs”</b> below.
+      </p>
+      <button class="big" id="syncBtn">Put it on my iPod</button>
+      <p class="small muted" id="syncHint" style="text-align:center;margin:8px 0 0" hidden>Plug in your iPod first (step 1).</p>
+      <details><summary>See the songs</summary><ul class="songs" id="pvSongs"></ul></details>
+    </div>
+
+    <details id="csvBox">
+      <summary>My playlist has more than 100 songs</summary>
+      <ol>
+        <li>Go to <b>exportify.app</b> and log in with Spotify.</li>
+        <li>Click <b>Export</b> next to your playlist. A <b>.csv</b> file downloads.</li>
+        <li>Drag that file into the box below (or click it to choose the file).</li>
+      </ol>
+      <label class="drop" id="drop">
+        Drop the .csv file here, or click to choose it
+        <input type="file" id="csvFile" accept=".csv,text/csv" hidden>
+      </label>
+    </details>
+  </section>
+
+  <!-- ON THE IPOD -->
+  <section class="card" id="libCard" hidden>
+    <div class="row" style="justify-content:space-between;margin-bottom:6px">
+      <h2 style="font-size:19px">On your iPod</h2>
+      <button class="ghost" id="ejectBtn2" style="padding:8px 16px">Eject iPod</button>
+    </div>
+    <p class="note good" id="ejectMsg2" hidden></p>
+    <p class="muted small" style="margin:0">Press <b>Update</b> after adding songs to a playlist in Spotify. Only the new songs are downloaded.</p>
+    <div id="libList"></div>
+  </section>
+
+  <footer>
+    Mixtape <span id="ver"></span> · <button class="link" id="quitBtn">Close Mixtape</button>
+  </footer>
+</main>
+
+<div class="overlay" id="goneOverlay" hidden>
+  <div class="card">
+    <h2 style="font-size:22px;margin-bottom:8px">Mixtape is closed</h2>
+    <p class="muted">To keep going, open the <b>Mixtape</b> app again. This page will reconnect by itself.</p>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let S = null, preview = null, failures = 0, quitting = false, confirmFor = null, lastJobKey = "";
+
+async function api(path, body) {
+  const r = await fetch(path, body === undefined ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json", "X-Mixtape": "1" },
+    body: JSON.stringify(body),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || "Something went wrong.");
+  return data;
+}
+const gb = (b) => (b / 1e9).toFixed(b > 1e11 ? 0 : 1) + " GB";
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ICON = { waiting: "", working: "", done: "✓", already: "✓", failed: "!" };
+function songRow(s) {
+  const state = s.state || "";
+  const why = s.why ? ` title="${esc(s.why)}"` : "";
+  return `<li${why}><span class="ic ${state}">${ICON[state] ?? ""}</span><span class="t">${esc(s.title)} <span>· ${esc(s.artist)}</span></span></li>`;
+}
+function showErr(el, msg) { el.textContent = msg; el.hidden = !msg; }
+function fmtTime(sec) {
+  if (!isFinite(sec) || sec <= 0) return "";
+  const m = Math.round(sec / 60);
+  return m < 1 ? "less than a minute left" : m === 1 ? "about 1 minute left" : `about ${m} minutes left`;
+}
+
+// ---------------------------------------------------------------- render
+function render() {
+  if (!S) return;
+  $("ver").textContent = "v" + S.version;
+  const ip = S.ipod;
+  $("noIpod").hidden = !!ip; $("yesIpod").hidden = !ip;
+  $("n1").classList.toggle("done", !!ip); $("n1").textContent = ip ? "✓" : "1";
+  if (ip) {
+    $("ipodName").textContent = ip.name;
+    $("ipodBar").style.width = (100 * (ip.total - ip.free) / ip.total).toFixed(1) + "%";
+    $("ipodSpace").textContent = `${gb(ip.free)} free of ${gb(ip.total)}`;
+    $("notRockbox").hidden = ip.rockbox;
+  }
+  $("manualBox").hidden = !!ip;
+  $("ipodPicker").hidden = S.ipods.length < 2;
+  const sel = $("ipodSelect");
+  const opts = S.ipods.map((i) => `<option value="${esc(i.path)}">${esc(i.name)} (${esc(i.path)})</option>`).join("");
+  if (sel.dataset.v !== opts) { sel.innerHTML = opts; sel.dataset.v = opts; }
+  if (ip) sel.value = ip.path;
+
+  // job
+  const j = S.job;
+  const active = j.state && j.state !== "idle";
+  $("jobCard").hidden = !active;
+  $("addCard").hidden = active;
+  if (active) renderJob(j);
+
+  // preview
+  $("syncBtn").disabled = !ip || running();
+  $("syncHint").hidden = !!ip;
+
+  // library
+  $("libCard").hidden = !ip;
+  renderLibrary();
+}
+function running() { return S && S.job.state === "running"; }
+
+function renderJob(j) {
+  const finished = j.state !== "running";
+  $("jobCover").src = j.image || "icon.svg";
+  $("jobName").textContent = j.name; $("jobName2").textContent = j.name;
+  $("jobLabel").textContent = finished ? (j.state === "cancelled" ? "Stopped" : "All done!") : "Adding to your iPod…";
+  $("jobCount").textContent = `${j.done} / ${j.total}`;
+  $("jobBar").style.width = (100 * j.done / Math.max(1, j.total)) + "%";
+  $("jobBar").parentElement.classList.toggle("good", finished && !j.error);
+  const elapsed = Date.now() / 1000 - j.started;
+  const newDone = j.added + j.failed;
+  const rate = newDone > 0 ? elapsed / newDone : 0;
+  $("jobEta").textContent = finished ? "" : (rate ? fmtTime(rate * (j.total - j.done)) : "starting…");
+  $("jobKeep").hidden = finished;
+  $("cancelBtn").hidden = finished;
+  $("ejectBtn").hidden = !finished || !S.ipod;
+  $("anotherBtn").hidden = !finished;
+  $("jobDone").hidden = !finished;
+  if (finished) {
+    const parts = [];
+    if (j.added) parts.push(`${j.added} new song${j.added === 1 ? "" : "s"} added`);
+    if (j.already) parts.push(`${j.already} already on your iPod`);
+    $("jobSummary").textContent = (parts.join(", ") || "Nothing new to add") + ".";
+    showErr($("jobError"), j.error || "");
+  }
+  const failed = j.songs.filter((s) => s.state === "failed");
+  $("failedBox").hidden = !failed.length;
+  $("failedSummary").textContent = `${failed.length} song${failed.length === 1 ? "" : "s"} couldn't be added`;
+  const key = j.songs.map((s) => s.state).join();
+  if (key !== lastJobKey) {
+    lastJobKey = key;
+    $("failedList").innerHTML = failed.map(songRow).join("");
+    $("jobSongs").innerHTML = j.songs.map(songRow).join("");
+  }
+}
+
+function renderLibrary() {
+  const list = S.playlists;
+  const html = list.length ? list.map((p) => {
+    const conf = confirmFor === p.name ? `
+      <div class="confirm">
+        <b>Remove “${esc(p.name)}” from the iPod?</b>
+        <label><input type="checkbox" id="delSongs" checked> Also delete its songs (keeps songs that are in other playlists)</label>
+        <div class="row"><button class="danger" data-act="delete" data-name="${esc(p.name)}">Remove</button>
+        <button class="ghost" data-act="nevermind">Keep it</button></div>
+      </div>` : "";
+    return `<div class="pl">
+      <img class="cover sm" src="${esc(p.image || "icon.svg")}" alt="">
+      <div class="grow"><b>${esc(p.name)}</b>
+        <span class="small muted">${p.count} song${p.count === 1 ? "" : "s"}${p.missing ? ` · ${p.missing} missing` : ""}</span></div>
+      <div class="row" style="gap:8px">
+        ${p.source ? `<button class="ghost" style="padding:8px 16px" data-act="update" data-name="${esc(p.name)}" ${running() ? "disabled" : ""}>Update</button>` : ""}
+        <button class="link" style="color:var(--muted)" data-act="ask" data-name="${esc(p.name)}" ${running() ? "disabled" : ""}>Remove</button>
+      </div>${conf}</div>`;
+  }).join("") : `<p class="muted" style="margin:14px 0 0">No playlists yet. Add one above!</p>`;
+  const box = $("libList");
+  if (box.dataset.v !== html) { box.innerHTML = html; box.dataset.v = html; }
+}
+
+// ---------------------------------------------------------------- polling
+async function poll() {
+  try {
+    S = await api("/api/state");
+    failures = 0; $("goneOverlay").hidden = true;
+    render();
+  } catch (e) {
+    if (++failures >= 3 || quitting) $("goneOverlay").hidden = false;
+  }
+  setTimeout(poll, running() ? 1000 : 1500);
+}
+
+// ---------------------------------------------------------------- actions
+function showPreview(p) {
+  preview = p;
+  $("preview").hidden = false;
+  $("pvCover").src = p.image || "icon.svg";
+  $("pvName").value = p.name;
+  $("pvCount").textContent = `${p.count} song${p.count === 1 ? "" : "s"}` + (p.kind === "album" ? " · album" : "");
+  $("pvTrunc").hidden = !p.maybe_truncated;
+  $("pvSongs").innerHTML = p.tracks.map(songRow).join("");
+  render();
+  $("syncBtn").scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+$("lookupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const url = $("link").value.trim();
+  if (!url) return showErr($("lookupErr"), "Paste a Spotify link into the box first.");
+  showErr($("lookupErr"), ""); $("findBtn").disabled = true; $("findBtn").textContent = "Looking…";
+  try { showPreview(await api("/api/lookup", { url })); }
+  catch (err) { showErr($("lookupErr"), err.message); $("preview").hidden = true; }
+  finally { $("findBtn").disabled = false; $("findBtn").textContent = "Find it"; }
+});
+// Pasting a link is enough: look it up straight away.
+$("link").addEventListener("paste", () => setTimeout(() => {
+  if (/spotify/.test($("link").value)) $("lookupForm").requestSubmit();
+}, 50));
+
+async function loadCsv(file) {
+  if (!file) return;
+  showErr($("lookupErr"), "");
+  try {
+    const text = await file.text();
+    showPreview(await api("/api/csv", { text, filename: file.name }));
+    $("csvBox").open = false;
+  } catch (err) { showErr($("lookupErr"), err.message); }
+}
+$("csvFile").addEventListener("change", (e) => loadCsv(e.target.files[0]));
+const drop = $("drop");
+["dragenter", "dragover"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => loadCsv(e.dataTransfer.files[0]));
+
+$("syncBtn").addEventListener("click", async () => {
+  if (!preview) return;
+  try {
+    await api("/api/sync", { id: preview.id, name: $("pvName").value });
+    lastJobKey = ""; $("ejectMsg").hidden = true; $("ejectMsg2").hidden = true;
+    S = await api("/api/state"); render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (err) { showErr($("lookupErr"), err.message); }
+});
+$("cancelBtn").addEventListener("click", () => api("/api/cancel", {}));
+$("anotherBtn").addEventListener("click", async () => {
+  await api("/api/dismiss", {});
+  preview = null; $("preview").hidden = true; $("link").value = "";
+  S = await api("/api/state"); render(); $("link").focus();
+});
+async function eject(msgEl) {
+  try {
+    const r = await api("/api/eject", {});
+    msgEl.className = "note " + (r.ok ? "good" : "warn");
+    msgEl.textContent = r.ok ? "It's safe to unplug your iPod now. Enjoy!" : r.message;
+    msgEl.hidden = false;
+  } catch (err) { msgEl.className = "note bad"; msgEl.textContent = err.message; msgEl.hidden = false; }
+}
+$("ejectBtn").addEventListener("click", () => eject($("ejectMsg")));
+$("ejectBtn2").addEventListener("click", () => eject($("ejectMsg2")));
+$("ipodSelect").addEventListener("change", (e) => api("/api/select", { path: e.target.value }));
+$("manualBtn").addEventListener("click", async () => {
+  try { await api("/api/select", { path: $("manualPath").value }); showErr($("manualErr"), ""); }
+  catch (err) { showErr($("manualErr"), err.message); }
+});
+$("libList").addEventListener("click", async (e) => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const name = b.dataset.name;
+  try {
+    if (b.dataset.act === "ask") confirmFor = name;
+    else if (b.dataset.act === "nevermind") confirmFor = null;
+    else if (b.dataset.act === "delete") { await api("/api/delete", { name, songs: $("delSongs").checked }); confirmFor = null; }
+    else if (b.dataset.act === "update") { await api("/api/update", { name }); lastJobKey = ""; window.scrollTo({ top: 0, behavior: "smooth" }); }
+    S = await api("/api/state"); render();
+  } catch (err) { alertBox(err.message); }
+});
+function alertBox(msg) { showErr($("lookupErr"), msg); $("lookupErr").scrollIntoView({ block: "center" }); }
+$("quitBtn").addEventListener("click", async () => {
+  if (running() && !window.confirm("A playlist is still being added. Close anyway?")) return;
+  quitting = true; await api("/api/quit", {}).catch(() => {});
+  $("goneOverlay").hidden = false;
+});
+poll();
+</script>
+</body>
+</html>

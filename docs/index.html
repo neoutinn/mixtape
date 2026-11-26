@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mixtape: Spotify playlists on your iPod</title>
+<meta name="description" content="Put your Spotify playlists on a Rockbox iPod in three clicks.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f5efe6; --card: #fffdf9; --ink: #221d18; --muted: #75695d; --line: #e7ddd0;
+    --accent: #e0533a; --accent-ink: #fff; --accent-soft: #fbe3dc; --good: #2f8a5b;
+    --shadow: 0 1px 2px rgba(60,40,20,.06), 0 8px 30px rgba(60,40,20,.07);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17140f; --card: #221e18; --ink: #f3ece3; --muted: #b1a597; --line: #3a332a;
+      --accent: #ff6e52; --accent-ink: #1b0f0b; --accent-soft: #3d2219; --good: #6fd19c; --shadow: none;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 17px/1.6 ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, sans-serif;
+         padding: 0 16px 80px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  a { color: var(--accent); font-weight: 600; }
+  .hero { text-align: center; padding: 64px 0 40px; }
+  .hero h1 { font-size: clamp(40px, 8vw, 64px); margin: 14px 0 6px; letter-spacing: -.035em; line-height: 1.05; }
+  .hero p.lead { font-size: 20px; color: var(--muted); margin: 0 auto 28px; max-width: 30em; }
+  .btn { display: inline-flex; align-items: center; gap: 10px; background: var(--accent); color: var(--accent-ink);
+         text-decoration: none; font-weight: 700; font-size: 19px; padding: 16px 30px; border-radius: 999px; }
+  .btn:hover { filter: brightness(1.05); }
+  .others { margin-top: 14px; font-size: 15px; color: var(--muted); }
+  .others a { margin: 0 6px; white-space: nowrap; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 26px; box-shadow: var(--shadow); margin-top: 20px; }
+  h2 { font-size: 26px; letter-spacing: -.02em; margin: 56px 0 4px; }
+  h3 { margin: 0 0 6px; font-size: 19px; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 20px; }
+  .steps .card { margin: 0; }
+  .num { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: var(--accent-ink);
+         display: grid; place-items: center; font-weight: 800; margin-bottom: 12px; }
+  .steps p, .card p { margin: 0; color: var(--muted); }
+  ol { padding-left: 22px; margin: 10px 0 0; }
+  ol li { margin-bottom: 6px; }
+  kbd { font: inherit; font-weight: 650; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px 20px; margin-top: 12px; }
+  summary { cursor: pointer; font-weight: 700; }
+  details p, details ol { color: var(--muted); margin: 10px 0 0; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .tabs button { font: inherit; font-weight: 650; border: 1.5px solid var(--line); background: transparent; color: var(--ink);
+                 padding: 8px 18px; border-radius: 999px; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  footer { text-align: center; color: var(--muted); font-size: 14px; margin-top: 60px; }
+  .note { font-size: 15px; color: var(--muted); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <svg width="92" height="92" viewBox="0 0 64 64" aria-hidden="true">
+      <rect x="4" y="12" width="56" height="40" rx="7" fill="var(--accent)"/>
+      <rect x="12" y="19" width="40" height="17" rx="4" fill="var(--card)"/>
+      <circle cx="23" cy="27.5" r="4.5" fill="var(--ink)"/><circle cx="41" cy="27.5" r="4.5" fill="var(--ink)"/>
+      <path d="M16 52l5-9h22l5 9" fill="none" stroke="var(--card)" stroke-width="3" stroke-linejoin="round"/>
+    </svg>
+    <h1>Mixtape</h1>
+    <p class="lead">Put your Spotify playlists on your iPod. Paste a link, press a button, done.</p>
+    <a class="btn" id="mainBtn" href="#">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12m0 0l-5-5m5 5l5-5M5 20h14"/></svg>
+      <span id="mainLabel">Download Mixtape</span>
+    </a>
+    <div class="others" id="others"></div>
+    <p class="note" style="margin-top:18px">Free. Works with iPods running <a href="https://www.rockbox.org">Rockbox</a>.</p>
+  </section>
+
+  <h2>How it works</h2>
+  <div class="steps">
+    <div class="card"><div class="num">1</div><h3>Open Mixtape</h3><p>Double-click the file you downloaded. A page opens in your web browser.</p></div>
+    <div class="card"><div class="num">2</div><h3>Plug in your iPod</h3><p>Mixtape finds it by itself and shows how much space is free.</p></div>
+    <div class="card"><div class="num">3</div><h3>Paste a playlist</h3><p>Copy the playlist's link in Spotify, paste it in, and press <b>Put it on my iPod</b>.</p></div>
+  </div>
+  <p class="note" style="margin-top:14px">Then on the iPod, open <b>Playlists</b> from the main menu. Your playlist is there with album covers.</p>
+
+  <h2>Opening it the first time</h2>
+  <p class="note" style="margin:0">Your computer will warn you because Mixtape is a small free app, not one from a big company. This only happens once.</p>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="win">Windows</button>
+    <button role="tab" data-tab="mac">Mac</button>
+    <button role="tab" data-tab="linux">Linux</button>
+  </div>
+  <div class="card" data-panel="win">
+    <ol>
+      <li>Double-click <b>Mixtape-Windows.exe</b> (it's in your Downloads folder).</li>
+      <li>If a blue box says <b>“Windows protected your PC”</b>, click <b>More info</b>, then <b>Run anyway</b>.</li>
+      <li>A page opens in your browser. That's Mixtape!</li>
+    </ol>
+  </div>
+  <div class="card" data-panel="mac" hidden>
+    <ol>
+      <li>Open your <b>Downloads</b> folder and double-click the <b>.zip</b> file. A <b>Mixtape</b> app appears.</li>
+      <li>Drag <b>Mixtape</b> into your <b>Applications</b> folder, then double-click it.</li>
+      <li>If it says <b>“Apple could not verify…”</b>, click <b>Done</b>. Open <b>System Settings → Privacy &amp; Security</b>, scroll down, and click <b>Open Anyway</b> next to Mixtape.</li>
+      <li>A page opens in your browser. That's Mixtape!</li>
+    </ol>
+    <p class="note" style="margin-top:10px">Not sure which Mac download? Click the Apple menu  → <b>About This Mac</b>. If it says <b>Chip: Apple M…</b>, get “Apple Silicon”. If it says <b>Processor: Intel</b>, get “Intel”.</p>
+  </div>
+  <div class="card" data-panel="linux" hidden>
+    <ol>
+      <li>Make it runnable: <kbd>chmod +x Mixtape-Linux</kbd> (or right-click → Properties → “Allow executing”).</li>
+      <li>Double-click it, or run <kbd>./Mixtape-Linux</kbd>.</li>
+    </ol>
+  </div>
+
+  <h2>Questions</h2>
+  <details>
+    <summary>Where does the music come from?</summary>
+    <p>Spotify doesn't let anyone download its songs, so Mixtape reads the list of songs from your playlist and finds each one on YouTube, picking the version whose length matches the Spotify one. It then adds the song name, artist, album and cover. Once in a while it picks a slightly different version (like a live one). If that happens, let whoever set this up know.</p>
+  </details>
+  <details>
+    <summary>Some songs say “couldn't be added”</summary>
+    <p>A few songs, usually very new or very obscure ones, can't be found. Press <b>Update</b> on the playlist in a few days to try again.</p>
+  </details>
+  <details>
+    <summary>I added songs to the playlist in Spotify. How do I get them on the iPod?</summary>
+    <p>Open Mixtape, plug in the iPod, and press <b>Update</b> next to the playlist. Only the new songs get downloaded.</p>
+  </details>
+  <details>
+    <summary>My playlist has more than 100 songs</summary>
+    <p>Spotify only shares the first 100 songs of a link. For bigger playlists, go to <a href="https://exportify.app">exportify.app</a>, log in, click <b>Export</b> next to the playlist, and drop the downloaded file into Mixtape (under “My playlist has more than 100 songs”).</p>
+  </details>
+  <details>
+    <summary>Will it delete my other music?</summary>
+    <p>No. Mixtape only adds files. When you remove a playlist in Mixtape, it only deletes songs that Mixtape added for that playlist and that aren't in another playlist.</p>
+  </details>
+  <details>
+    <summary>The songs don't show up under Artists or Albums on the iPod</summary>
+    <p>Playlists work right away. To also browse by artist or album, on the iPod go to <b>Settings → General Settings → Database → Update Now</b> once after adding music. You can turn on <b>Auto Update</b> there too.</p>
+  </details>
+  <details>
+    <summary>Mixtape doesn't see my iPod</summary>
+    <p>Check that the iPod screen shows it's connected by USB, not just charging. Try another cable or USB port. In Mixtape, click <b>It's plugged in but nothing shows up</b> for more help.</p>
+  </details>
+  <details>
+    <summary>How do I close Mixtape?</summary>
+    <p>Click <b>Close Mixtape</b> at the bottom of the page, or just close the browser tab. It shuts itself down a few minutes later.</p>
+  </details>
+
+  <footer>
+    Made with love for one very specific iPod. · <a id="srcLink" href="#">Source code</a> · <a id="relLink" href="#">All downloads</a>
+  </footer>
+</div>
+
+<script>
+// Works out the GitHub repo from the address (user.github.io/repo). Set REPO by hand if you use a custom domain.
+let REPO = "";
+if (!REPO && location.hostname.endsWith(".github.io")) {
+  REPO = location.hostname.split(".")[0] + "/" + (location.pathname.split("/")[1] || "mixtape");
+}
+const base = REPO ? `https://github.com/${REPO}` : "https://github.com";
+const dl = (f) => `${base}/releases/latest/download/${f}`;
+const FILES = {
+  win: { label: "Download for Windows", file: "Mixtape-Windows.exe" },
+  macArm: { label: "Download for Mac (Apple Silicon)", file: "Mixtape-Mac-AppleSilicon.zip" },
+  macIntel: { label: "Download for Mac (Intel)", file: "Mixtape-Mac-Intel.zip" },
+  linux: { label: "Download for Linux", file: "Mixtape-Linux" },
+};
+const ua = navigator.userAgent;
+let os = /Windows/.test(ua) ? "win" : /Mac/.test(ua) ? "macArm" : /Linux/.test(ua) && !/Android/.test(ua) ? "linux" : "win";
+const main = FILES[os];
+document.getElementById("mainBtn").href = dl(main.file);
+document.getElementById("mainLabel").textContent = main.label;
+document.getElementById("others").innerHTML = "Other computers: " + Object.entries(FILES)
+  .filter(([k]) => k !== os)
+  .map(([, f]) => `<a href="${dl(f.file)}">${f.label.replace("Download for ", "")}</a>`).join("·");
+document.getElementById("srcLink").href = base;
+document.getElementById("relLink").href = base + "/releases/latest";
+
+// Tabs for the "first time" instructions
+const tabFor = os.startsWith("mac") ? "mac" : os;
+function showTab(t) {
+  document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === t));
+  document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== t));
+}
+document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
+showTab(tabFor);
+</script>
+</body>
+</html>
