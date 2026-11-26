@@ -18,7 +18,7 @@ if sys.platform == "darwin":
         info_plist={
             # No Dock icon: Mixtape lives in the browser and quits by itself when the tab closes.
             "LSUIElement": True,
-            "CFBundleShortVersionString": "1.0.0",
+            "CFBundleShortVersionString": "1.1.0",
         },
     )
 else:

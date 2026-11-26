@@ -1,10 +1,15 @@
 """Find Rockbox iPods that are plugged in, and eject them."""
 
 import glob
+import json
+import logging
 import os
 import shutil
 import subprocess
 import sys
+import time
+
+log = logging.getLogger("mixtape.ipod")
 
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -67,10 +72,45 @@ def describe(path: str) -> dict:
         "free": usage.free,
         "total": usage.total,
         "rockbox": _is_rockbox(path),
+        # e.g. mounted with plain "sudo mount": readable but we can't add songs
+        "writable": os.access(path, os.W_OK),
     }
 
 
+_mount_tried: dict[str, float] = {}
+
+
+def _automount_linux():
+    """Mount a plugged-in iPod that nothing has mounted yet (common on Arch
+    without a desktop file manager). udisks lets the logged-in user do this
+    without a password, and it mounts it writable for them."""
+    if not sys.platform.startswith("linux") or not shutil.which("udisksctl"):
+        return
+    try:
+        out = subprocess.run(["lsblk", "-J", "-o", "PATH,FSTYPE,MOUNTPOINTS,MODEL,VENDOR,HOTPLUG"],
+                             capture_output=True, text=True, timeout=5).stdout
+        disks = json.loads(out).get("blockdevices", [])
+    except Exception:
+        return
+    for disk in disks:
+        ident = f"{disk.get('vendor') or ''} {disk.get('model') or ''}".lower()
+        if not disk.get("hotplug") or not ("ipod" in ident or "apple" in ident):
+            continue
+        for part in disk.get("children") or []:
+            mounted = [m for m in part.get("mountpoints") or [] if m]
+            dev = part.get("path")
+            if part.get("fstype") not in ("vfat", "exfat", "hfsplus") or mounted or not dev:
+                continue
+            if time.time() - _mount_tried.get(dev, 0) < 30:
+                continue  # don't hammer a device that failed to mount
+            _mount_tried[dev] = time.time()
+            r = subprocess.run(["udisksctl", "mount", "-b", dev, "--no-user-interaction"],
+                               capture_output=True, text=True, timeout=30)
+            log.info("Auto-mount %s: %s", dev, (r.stdout or r.stderr).strip())
+
+
 def find_ipods() -> list[dict]:
+    _automount_linux()
     seen, found = set(), []
     for p in _candidates():
         real = os.path.realpath(p)

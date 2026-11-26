@@ -108,6 +108,13 @@
     <p class="note" style="margin-top:10px">Not sure which Mac download? Click the Apple menu  → <b>About This Mac</b>. If it says <b>Chip: Apple M…</b>, get “Apple Silicon”. If it says <b>Processor: Intel</b>, get “Intel”.</p>
   </div>
   <div class="card" data-panel="linux" hidden>
+    <h3>Arch Linux (and Manjaro, EndeavourOS, CachyOS…)</h3>
+    <p>Install it as a normal package. It shows up as <b>Mixtape</b> in your app launcher, and <kbd>pacman -Syu</kbd> keeps its downloader up to date.</p>
+    <pre style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:14px;margin:12px 0 0"><code>git clone https://github.com/neoutinn/mixtape
+cd mixtape/packaging/arch
+makepkg -si</code></pre>
+    <p style="margin-top:10px">Mixtape mounts the iPod for you when it's plugged in, so there's no need to <kbd>sudo mount</kbd> it.</p>
+    <h3 style="margin-top:22px">Other Linux</h3>
     <ol>
       <li>Make it runnable: <kbd>chmod +x Mixtape-Linux</kbd> (or right-click → Properties → “Allow executing”).</li>
       <li>Double-click it, or run <kbd>./Mixtape-Linux</kbd>.</li>

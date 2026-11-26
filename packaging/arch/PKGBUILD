@@ -1,0 +1,29 @@
+# Arch Linux package for Mixtape, built from this checkout.
+#   cd packaging/arch && makepkg -si
+# Uses Arch's own yt-dlp, ffmpeg and mutagen, so `pacman -Syu` keeps them current.
+pkgname=mixtape-ipod
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="Put Spotify playlists on a Rockbox iPod: paste a link, press a button"
+arch=('any')
+url="https://github.com/neoutinn/mixtape"
+license=('MIT')
+depends=('python' 'python-mutagen' 'yt-dlp' 'ffmpeg' 'udisks2' 'xdg-utils' 'util-linux')
+optdepends=('deno: lets yt-dlp keep up with YouTube changes')
+source=('mixtape.desktop' 'mixtape.sh')
+sha256sums=('SKIP' 'SKIP')
+
+_repo="$(realpath "$startdir/../..")"
+
+package() {
+  local lib="$pkgdir/usr/lib/$pkgname"
+  install -d "$lib"
+  cp -r "$_repo/mixtape" "$lib/"
+  find "$lib" -name '__pycache__' -prune -exec rm -rf {} +
+  python -m compileall -q -d "/usr/lib/$pkgname" "$lib"
+
+  install -Dm755 "$srcdir/mixtape.sh" "$pkgdir/usr/bin/mixtape"
+  install -Dm644 "$srcdir/mixtape.desktop" "$pkgdir/usr/share/applications/mixtape.desktop"
+  install -Dm644 "$_repo/mixtape/ui/icon.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/mixtape.svg"
+  install -Dm644 "$_repo/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

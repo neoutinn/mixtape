@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Mixtape
+GenericName=iPod Playlist Sync
+Comment=Put Spotify playlists on your Rockbox iPod
+Exec=mixtape
+Icon=mixtape
+Terminal=false
+Categories=AudioVideo;Audio;Utility;
+Keywords=ipod;rockbox;spotify;playlist;music;

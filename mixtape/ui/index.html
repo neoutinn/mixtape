@@ -148,6 +148,7 @@
         <span class="small muted">More than one found:</span>
         <select id="ipodSelect" style="font:inherit;padding:6px 10px;border-radius:10px"></select>
       </div>
+      <div id="readOnly" class="note bad" hidden>Your computer opened the iPod as <b>read-only</b>, so songs can't be added. Eject it, unplug it, and plug it back in. (Linux: it was probably mounted with <kbd>sudo mount</kbd>. Unmount it and let Mixtape mount it.)</div>
       <div id="notRockbox" class="note warn" hidden>This drive doesn't have Rockbox on it. Are you sure it's the iPod?</div>
     </div>
     <details id="manualBox">
@@ -314,6 +315,7 @@ function render() {
     $("ipodBar").style.width = (100 * (ip.total - ip.free) / ip.total).toFixed(1) + "%";
     $("ipodSpace").textContent = `${gb(ip.free)} free of ${gb(ip.total)}`;
     $("notRockbox").hidden = ip.rockbox;
+    $("readOnly").hidden = ip.writable !== false;
   }
   $("manualBox").hidden = !!ip;
   $("ipodPicker").hidden = S.ipods.length < 2;
@@ -330,7 +332,7 @@ function render() {
   if (active) renderJob(j);
 
   // preview
-  $("syncBtn").disabled = !ip || running();
+  $("syncBtn").disabled = !ip || ip.writable === false || running();
   $("syncHint").hidden = !!ip;
 
   // library

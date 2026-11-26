@@ -40,6 +40,21 @@ The website (in `docs/`) is the friendly download page; the apps are built by Gi
    The **Build apps** workflow builds Windows, Mac (Apple Silicon + Intel) and Linux versions and
    attaches them to a GitHub Release, which is where the website's download buttons point.
 
+## Arch Linux
+
+A native package lives in `packaging/arch`. It uses Arch's own `yt-dlp`, `ffmpeg` and `python-mutagen`,
+adds a **Mixtape** launcher entry, and installs the `mixtape` command:
+
+```sh
+git clone https://github.com/neoutinn/mixtape
+cd mixtape/packaging/arch
+makepkg -si
+```
+
+On Linux, Mixtape mounts a plugged-in iPod itself through udisks (no password, mounted writable for
+your user). If the iPod was mounted with a plain `sudo mount`, it's read-only for you, and Mixtape will
+tell you so. Unmount it and let Mixtape handle it.
+
 ## Running from source (for development)
 
 ```sh

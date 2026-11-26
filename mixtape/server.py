@@ -144,6 +144,7 @@ class Handler(BaseHTTPRequestHandler):
             cur = APP.current()
             if not cur:
                 raise UserError("Plug in your iPod first.")
+            _check_writable(cur)
             pl = APP.previews.get(body.get("id"))
             if not pl:
                 raise UserError("Please paste the playlist link again.")
@@ -157,6 +158,7 @@ class Handler(BaseHTTPRequestHandler):
             cur = APP.current()
             if not cur:
                 raise UserError("Plug in your iPod first.")
+            _check_writable(cur)
             name = body.get("name", "")
             entry = Library(cur["path"]).playlists.get(name)
             if not entry or not entry.get("source"):
@@ -201,6 +203,12 @@ class Handler(BaseHTTPRequestHandler):
 
 class UserError(Exception):
     pass
+
+
+def _check_writable(cur):
+    if not cur.get("writable", True):
+        raise UserError("The iPod is opened read-only, so songs can't be added. "
+                        "Eject it, unplug it, and plug it back in.")
 
 
 class Server(ThreadingHTTPServer):
