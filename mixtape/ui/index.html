@@ -126,9 +126,10 @@
     <div class="step"><span class="num" id="n1">1</span><h2>Plug in your iPod</h2></div>
     <div id="noIpod">
       <div class="row" style="gap:12px;flex-wrap:nowrap">
-        <span class="pulse"></span>
-        <p style="margin:0">Connect your iPod with its cable and wait for it to show <b>“USB connected”</b> (or a USB logo). We'll find it automatically.</p>
+        <span class="pulse" id="noPulse"></span>
+        <p style="margin:0" id="noIpodText"></p>
       </div>
+      <p class="note bad" id="connectErr" hidden></p>
     </div>
     <div id="yesIpod" hidden>
       <div class="ipod">
@@ -304,12 +305,27 @@ function fmtTime(sec) {
 }
 
 // ---------------------------------------------------------------- render
+const NO_IPOD = {
+  waiting: "Connect your iPod with its cable and wait for it to show <b>“USB connected”</b> (or a USB logo). We'll find it automatically.",
+  connecting: "Found your iPod. Opening it…",
+  ejected: "<b>Ejected.</b> It's safe to unplug your iPod now. To use it again, unplug it and plug it back in.",
+};
+function renderNoIpod() {
+  const c = S.connect || {};
+  const mode = c.connecting ? "connecting" : c.ejected ? "ejected" : "waiting";
+  const p = $("noIpodText");
+  if (p.dataset.v !== mode) { p.innerHTML = NO_IPOD[mode]; p.dataset.v = mode; }
+  $("noPulse").style.background = mode === "ejected" ? "var(--good)" : "";
+  $("noPulse").style.animation = mode === "ejected" ? "none" : "";
+  showErr($("connectErr"), c.error ? `Your iPod is plugged in but couldn't be opened: ${c.error}` : "");
+}
 function render() {
   if (!S) return;
   $("ver").textContent = "v" + S.version;
   const ip = S.ipod;
   $("noIpod").hidden = !!ip; $("yesIpod").hidden = !ip;
   $("n1").classList.toggle("done", !!ip); $("n1").textContent = ip ? "✓" : "1";
+  if (!ip) renderNoIpod();
   if (ip) {
     $("ipodName").textContent = ip.name;
     $("ipodBar").style.width = (100 * (ip.total - ip.free) / ip.total).toFixed(1) + "%";
@@ -400,15 +416,19 @@ function renderLibrary() {
 }
 
 // ---------------------------------------------------------------- polling
+// Long-poll: the server holds the request until the iPod list changes (or ~1.5 s),
+// so plugging in and ejecting show up immediately.
 async function poll() {
+  let delay = 100;
   try {
-    S = await api("/api/state");
+    S = await api("/api/state?wait=" + (S && S.gen != null ? S.gen : -1));
     failures = 0; $("goneOverlay").hidden = true;
     render();
   } catch (e) {
     if (++failures >= 3 || quitting) $("goneOverlay").hidden = false;
+    delay = 1500;
   }
-  setTimeout(poll, running() ? 1000 : 1500);
+  setTimeout(poll, delay);
 }
 
 // ---------------------------------------------------------------- actions
@@ -474,6 +494,7 @@ async function eject(msgEl) {
     msgEl.className = "note " + (r.ok ? "good" : "warn");
     msgEl.textContent = r.ok ? "It's safe to unplug your iPod now. Enjoy!" : r.message;
     msgEl.hidden = false;
+    S = await api("/api/state"); render();
   } catch (err) { msgEl.className = "note bad"; msgEl.textContent = err.message; msgEl.hidden = false; }
 }
 $("ejectBtn").addEventListener("click", () => eject($("ejectMsg")));

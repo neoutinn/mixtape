@@ -7,6 +7,7 @@ import os
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs
 
 from . import __version__, ipod, spotify, updater
 from .paths import ui_dir
@@ -25,17 +26,16 @@ class App:
         self.previews = {}    # id -> playlist (looked up, not yet synced)
         self.last_seen = time.time()
         self.lock = threading.Lock()
-        self._ipods = []
-        self._ipods_at = 0.0
 
     def ipods(self):
-        if time.time() - self._ipods_at > 1.5:
-            found = ipod.find_ipods()
-            if self.manual and os.path.isdir(self.manual) and not any(
-                    os.path.realpath(i["path"]) == os.path.realpath(self.manual) for i in found):
+        found = list(WATCHER.ipods)
+        if self.manual and os.path.isdir(self.manual) and not any(
+                os.path.realpath(i["path"]) == os.path.realpath(self.manual) for i in found):
+            try:
                 found.append(ipod.describe(self.manual))
-            self._ipods, self._ipods_at = found, time.time()
-        return self._ipods
+            except OSError:
+                pass
+        return found
 
     def current(self):
         ipods = self.ipods()
@@ -45,9 +45,12 @@ class App:
         return next((i for i in ipods if i["path"] == self.selected), None)
 
     def state(self):
+        gen = WATCHER.gen  # read first, so a change during this call isn't missed
         cur = self.current()
         return {
             "version": __version__,
+            "gen": gen,
+            "connect": WATCHER.status,
             "ipods": self.ipods(),
             "ipod": cur,
             "playlists": Library(cur["path"]).summary() if cur else [],
@@ -55,6 +58,7 @@ class App:
         }
 
 
+WATCHER = ipod.Watcher()
 APP = App()
 
 
@@ -92,10 +96,18 @@ class Handler(BaseHTTPRequestHandler):
         if not self._ok_host():
             return self._send(403, {"error": "forbidden"})
         APP.last_seen = time.time()
-        path = self.path.split("?")[0]
+        path, _, query = self.path.partition("?")
         if path == "/api/ping":
             return self._send(200, {"app": "mixtape", "version": __version__})
         if path == "/api/state":
+            # ?wait=<gen>: hold the request until the iPod list changes (long-poll),
+            # so plugging in or ejecting shows up in the page straight away.
+            wait = parse_qs(query).get("wait")
+            if wait:
+                try:
+                    WATCHER.wait(int(wait[0]), 1.0 if APP.syncer.busy() else 1.5)
+                except ValueError:
+                    pass
             try:
                 return self._send(200, APP.state())
             except Exception as e:
@@ -137,8 +149,8 @@ class Handler(BaseHTTPRequestHandler):
             if p and not os.path.isdir(p):
                 raise UserError("That folder doesn't exist.")
             APP.manual = p or None
-            APP._ipods_at = 0
             APP.selected = p or None
+            WATCHER.touch()
             return None
         if path == "/api/sync":
             cur = APP.current()
@@ -190,8 +202,7 @@ class Handler(BaseHTTPRequestHandler):
                 return {"ok": True, "message": "No iPod plugged in."}
             if APP.syncer.busy():
                 raise UserError("Wait for the current sync to finish first.")
-            ok, msg = ipod.eject(cur["path"])
-            APP._ipods_at = 0
+            ok, msg = WATCHER.eject(cur["path"])
             if APP.manual == cur["path"]:
                 APP.manual = None
             return {"ok": ok, "message": msg}

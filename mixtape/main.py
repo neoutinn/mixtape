@@ -8,7 +8,7 @@ import webbrowser
 
 from . import __version__, updater
 from .paths import data_dir, is_frozen
-from .server import PORT, idle_watchdog, make_server
+from .server import PORT, WATCHER, idle_watchdog, make_server
 
 
 def setup_logging():
@@ -51,6 +51,7 @@ def main():
         httpd = make_server(0)  # port busy with something else: pick any free one
     url = f"http://127.0.0.1:{httpd.server_address[1]}/"
     log.info("Serving on %s", url)
+    WATCHER.start()
     threading.Thread(target=updater.update_in_background, daemon=True).start()
     threading.Thread(target=idle_watchdog, daemon=True).start()
     if "--no-browser" not in sys.argv:
