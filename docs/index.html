@@ -84,21 +84,21 @@
   </div>
   <p class="note" style="margin-top:14px">Then on the iPod, open <b>Playlists</b> from the main menu. Your playlist is there with album covers.</p>
 
-  <h2>Opening it the first time</h2>
+  <h2 id="first-time">Opening it the first time</h2>
   <p class="note" style="margin:0">Your computer will warn you because Mixtape is a small free app, not one from a big company. This only happens once.</p>
   <div class="tabs" role="tablist">
-    <button role="tab" data-tab="win">Windows</button>
-    <button role="tab" data-tab="mac">Mac</button>
-    <button role="tab" data-tab="linux">Linux</button>
+    <button role="tab" data-group="first" data-tab="win">Windows</button>
+    <button role="tab" data-group="first" data-tab="mac">Mac</button>
+    <button role="tab" data-group="first" data-tab="linux">Linux</button>
   </div>
-  <div class="card" data-panel="win">
+  <div class="card" data-group="first" data-panel="win">
     <ol>
       <li>Double-click <b>Mixtape-Windows.exe</b> (it's in your Downloads folder).</li>
       <li>If a blue box says <b>“Windows protected your PC”</b>, click <b>More info</b>, then <b>Run anyway</b>.</li>
       <li>A page opens in your browser. That's Mixtape!</li>
     </ol>
   </div>
-  <div class="card" data-panel="mac" hidden>
+  <div class="card" data-group="first" data-panel="mac" hidden>
     <ol>
       <li>Open your <b>Downloads</b> folder and double-click the <b>.zip</b> file. A <b>Mixtape</b> app appears.</li>
       <li>Drag <b>Mixtape</b> into your <b>Applications</b> folder, then double-click it.</li>
@@ -107,7 +107,7 @@
     </ol>
     <p class="note" style="margin-top:10px">Not sure which Mac download? Click the Apple menu  → <b>About This Mac</b>. If it says <b>Chip: Apple M…</b>, get “Apple Silicon”. If it says <b>Processor: Intel</b>, get “Intel”.</p>
   </div>
-  <div class="card" data-panel="linux" hidden>
+  <div class="card" data-group="first" data-panel="linux" hidden>
     <h3>Arch Linux (and Manjaro, EndeavourOS, CachyOS…)</h3>
     <p>Install it as a normal package. It shows up as <b>Mixtape</b> in your app launcher, and <kbd>pacman -Syu</kbd> keeps its downloader up to date.</p>
     <pre style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:14px;margin:12px 0 0"><code>git clone https://github.com/neoutinn/mixtape
@@ -120,6 +120,46 @@ makepkg -si</code></pre>
       <li>Double-click it, or run <kbd>./Mixtape-Linux</kbd>.</li>
     </ol>
   </div>
+
+
+  <h2 id="update">Updating Mixtape</h2>
+  <p class="note" style="margin:0">Already have it? Download the new version and put it where the old one was. Your playlists and songs are stored on the iPod, so updating doesn't touch them. You can see which version you have at the bottom of the Mixtape page.<span id="latestVer"></span></p>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-group="update" data-tab="win">Windows</button>
+    <button role="tab" data-group="update" data-tab="mac">Mac</button>
+    <button role="tab" data-group="update" data-tab="linux">Linux</button>
+  </div>
+  <div class="card" data-group="update" data-panel="win">
+    <ol>
+      <li>In Mixtape, click <b>Close Mixtape</b> at the bottom of the page.</li>
+      <li><a data-dl="win" href="#">Download the new Mixtape-Windows.exe</a>.</li>
+      <li>Delete the old <b>Mixtape-Windows.exe</b> (or move the new one over it), then double-click the new one.</li>
+      <li>If the blue <b>“Windows protected your PC”</b> box comes back, click <b>More info</b>, then <b>Run anyway</b>.</li>
+    </ol>
+  </div>
+  <div class="card" data-group="update" data-panel="mac" hidden>
+    <ol>
+      <li>In Mixtape, click <b>Close Mixtape</b> at the bottom of the page.</li>
+      <li>Download the new version: <a data-dl="macArm" href="#">Apple Silicon</a> or <a data-dl="macIntel" href="#">Intel</a>.</li>
+      <li>Double-click the <b>.zip</b>, drag the new <b>Mixtape</b> into <b>Applications</b>, and click <b>Replace</b>.</li>
+      <li>Open it. If the Mac warns you again, do the <b>Open Anyway</b> step from <a href="#first-time">Opening it the first time</a>.</li>
+    </ol>
+  </div>
+  <div class="card" data-group="update" data-panel="linux" hidden>
+    <h3>Arch Linux</h3>
+    <p>Close Mixtape, then in the folder you cloned before:</p>
+    <pre style="background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;overflow-x:auto;font-size:14px;margin:12px 0 0"><code>cd mixtape
+git pull
+cd packaging/arch
+makepkg -si</code></pre>
+    <p style="margin-top:10px">Deleted that folder? Just do the install steps above again.</p>
+    <h3 style="margin-top:22px">Other Linux</h3>
+    <ol>
+      <li>Close Mixtape, then <a data-dl="linux" href="#">download the new Mixtape-Linux</a> and replace the old file with it.</li>
+      <li>Make it runnable again: <kbd>chmod +x Mixtape-Linux</kbd>.</li>
+    </ol>
+  </div>
+  <p class="note" style="margin-top:14px">You don't need to update to keep downloads working: Mixtape keeps its YouTube downloader up to date by itself.</p>
 
   <h2>Questions</h2>
   <details>
@@ -156,7 +196,7 @@ makepkg -si</code></pre>
   </details>
 
   <footer>
-    Made with love for one very specific iPod. · <a id="srcLink" href="#">Source code</a> · <a id="relLink" href="#">All downloads</a>
+    Made with love for one very specific iPod. · <a id="srcLink" href="#">Source code</a> · <a href="#update">Update Mixtape</a> · <a id="relLink" href="#">All downloads</a>
   </footer>
 </div>
 
@@ -185,14 +225,26 @@ document.getElementById("others").innerHTML = "Other computers: " + Object.entri
 document.getElementById("srcLink").href = base;
 document.getElementById("relLink").href = base + "/releases/latest";
 
-// Tabs for the "first time" instructions
+document.querySelectorAll("[data-dl]").forEach((a) => (a.href = dl(FILES[a.dataset.dl].file)));
+
+// Tabs for the "first time" and "updating" instructions (each group switches on its own)
 const tabFor = os.startsWith("mac") ? "mac" : os;
-function showTab(t) {
-  document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === t));
-  document.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== t));
+function showTab(group, t) {
+  document.querySelectorAll(`[data-group="${group}"][data-tab]`).forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === t));
+  document.querySelectorAll(`[data-group="${group}"][data-panel]`).forEach((p) => (p.hidden = p.dataset.panel !== t));
 }
-document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
-showTab(tabFor);
+document.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.group, b.dataset.tab)));
+["first", "update"].forEach((g) => showTab(g, tabFor));
+
+// Show the newest version, so people can tell whether they need to update.
+if (REPO) {
+  fetch(`https://api.github.com/repos/${REPO}/releases/latest`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((r) => {
+      if (r && r.tag_name) document.getElementById("latestVer").innerHTML = ` The newest version is <b>${r.tag_name.replace(/[^\w.\-]/g, "")}</b>.`;
+    })
+    .catch(() => {});
+}
 </script>
 </body>
 </html>
