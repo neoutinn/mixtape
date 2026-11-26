@@ -87,16 +87,20 @@ def _automount_linux():
     if not sys.platform.startswith("linux") or not shutil.which("udisksctl"):
         return
     try:
-        out = subprocess.run(["lsblk", "-J", "-o", "PATH,FSTYPE,MOUNTPOINTS,MODEL,VENDOR,HOTPLUG"],
-                             capture_output=True, text=True, timeout=5).stdout
-        disks = json.loads(out).get("blockdevices", [])
-    except Exception:
+        # Flat list (-l) + PKNAME links each partition to its disk. (Without NAME
+        # in the columns lsblk gives no tree, so don't rely on "children".)
+        out = subprocess.run(
+            ["lsblk", "-J", "-l", "-o", "NAME,PKNAME,PATH,TYPE,FSTYPE,MOUNTPOINTS,MODEL,VENDOR,HOTPLUG"],
+            capture_output=True, text=True, timeout=5).stdout
+        devices = json.loads(out).get("blockdevices", [])
+    except Exception as e:
+        log.info("lsblk failed: %s", e)
         return
-    for disk in disks:
+    for disk in devices:
         ident = f"{disk.get('vendor') or ''} {disk.get('model') or ''}".lower()
-        if not disk.get("hotplug") or not ("ipod" in ident or "apple" in ident):
+        if disk.get("type") != "disk" or not disk.get("hotplug") or not ("ipod" in ident or "apple" in ident):
             continue
-        for part in disk.get("children") or []:
+        for part in [d for d in devices if d.get("pkname") == disk.get("name")]:
             mounted = [m for m in part.get("mountpoints") or [] if m]
             dev = part.get("path")
             if part.get("fstype") not in ("vfat", "exfat", "hfsplus") or mounted or not dev:

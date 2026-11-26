@@ -2,7 +2,7 @@
 #   cd packaging/arch && makepkg -si
 # Uses Arch's own yt-dlp, ffmpeg and mutagen, so `pacman -Syu` keeps them current.
 pkgname=mixtape-ipod
-pkgver=1.1.0
+pkgver=1.1.1
 pkgrel=1
 pkgdesc="Put Spotify playlists on a Rockbox iPod: paste a link, press a button"
 arch=('any')
